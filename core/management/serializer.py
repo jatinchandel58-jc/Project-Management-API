@@ -159,3 +159,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+class ProfilePictureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["profile_picture"]

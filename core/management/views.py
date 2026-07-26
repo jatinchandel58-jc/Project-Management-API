@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, logout
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework_simplejwt.exceptions import TokenError
 from .models import (
     User,
 )
@@ -16,11 +17,12 @@ from .serializer import (
     ProfileSerializer,
     ChangePasswordSerializer,
     LogoutSerializer,
+    ProfilePictureSerializer
 )
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
+
     def get(self, request):
         seriailzer = ProfileSerializer(request.user)
         return Response({
@@ -44,6 +46,21 @@ class ProfileView(APIView):
     
     def patch(self, request):
         serializer = ProfileSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({
+            "message": "Update Successfully",
+            "data": serializer.data
+        },
+        status=status.HTTP_200_OK
+        )
+
+class ProfilePicView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def patch(self, request):
+        serializer = ProfilePictureSerializer(request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({
@@ -156,3 +173,26 @@ class ChangePassword(APIView):
             },
             status=status.HTTP_200_OK)
 
+class RefreshTokenView(APIView):
+
+    def post(self, request): 
+        serializer = LogoutSerializer(
+            data=request.data
+            )
+        
+        serializer.is_valid(raise_exception=True)
+        try:
+            refresh = serializer.validated_data["refresh"]
+            token = RefreshToken(refresh)
+            new_access_token = str(token.access_token)
+            return Response({
+                "message": "Your Update Access Token", 
+                "data": new_access_token
+            })
+        except TokenError:
+            return Response(
+                {
+                    "message": "Refresh token is invalid or has been blacklisted."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
