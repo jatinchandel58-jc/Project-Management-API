@@ -36,8 +36,15 @@ class ProjectSerializer(serializers.ModelSerializer):
         return obj
 
     def validate(self, data):
-        start_date = data.get("start_date")
-        end_date = data.get("end_date")
+        start_date = data.get(
+            "start_date",
+            self.instance.start_date if self.instance else None
+        )
+
+        end_date = data.get(
+            "end_date",
+            self.instance.end_date if self.instance else None
+        )
 
         if start_date and end_date:
             if start_date > end_date:
