@@ -1,10 +1,12 @@
 from rest_framework import status, viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework import filters
+from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
 
-from .models import Workspace
-from .serializer import WorkspaceSerializer
+from .models import Workspace, WorkspaceMember
+from .serializer import WorkspaceSerializer, WorkspaceMemberSerializer, WorkspaceGetSerializer
 
 
 class WorkspaceViewSet(viewsets.ModelViewSet):
@@ -101,3 +103,41 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_200_OK,
         )
+
+class CreateMemberView(APIView):
+    permission_classes = [IsAuthenticated]
+    #GET /api/workspaces/<workspace_id>/members/
+    def get(self, request, workspace_id):
+        workspace = get_object_or_404(
+            Workspace,
+            id=workspace_id
+        )
+        queryset = WorkspaceMember.objects.filter(workspace=workspace)
+        serializer = WorkspaceGetSerializer(queryset, many=True)
+        return Response({
+            "Message": "All Member Data",
+            "Data": serializer.data
+        })
+
+    def post(self, request):
+        serializer = WorkspaceMemberSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({
+            "Message": "Your Create a member for workspace",
+            "Data": serializer.data
+        })
+
+class GetMemberView(APIView):
+    def get(self, request, workspace_id, member_id):
+        queryset = get_object_or_404(
+            WorkspaceMember,
+            id= member_id,
+            workspace_id=workspace_id
+        )
+        serializer = WorkspaceGetSerializer(queryset)
+        return Response({
+            "status": True,
+            "Message": "Member of the workspace",
+            "Data": serializer.data
+        })
