@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Workspace
+from .models import Workspace , WorkspaceMember
 
 @admin.register(Workspace)
 class WorkspaceAdmin(admin.ModelAdmin):
@@ -52,3 +52,7 @@ class WorkspaceAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+@admin.register(WorkspaceMember)
+class MemberAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "workspace", "joined_at")
