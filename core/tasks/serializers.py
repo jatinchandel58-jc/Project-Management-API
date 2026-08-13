@@ -1,7 +1,11 @@
 from rest_framework import serializers
 from .models import Task
+from project.models import Project
+from workspace.models import WorkspaceMember
+
 
 class TaskSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Task
         fields = [
@@ -23,36 +27,30 @@ class TaskSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
-    def validate_title(self, attrs):
-        if attrs.strip() == "":
+    def validate_title(self, value):
+        if value.strip() == "":
             raise serializers.ValidationError(
-                "Please fill the title "
-            )
-        return attrs
-
-    def validate(self, data):
-        project = data.get(
-            "project",
-            self.instance.project if self.instance else None)
-        due_date = data.get(
-            "due_date",
-            self.instance.due_date if self.instance else None
+                "Please fill the title."
             )
 
-        if project and due_date:
-            if due_date < project.start_date:
-                raise serializers.ValidationError(
-                    "Task due date cannot be before project start date."
-                )
+        return value
 
-        return data
+    def validate_assigned_to(self, value):
+        project_id = self.initial_data.get("project")
 
-    # def validate_project(self, value):
-    #     request = self.context.get("request")
+        if not project_id:
+            return value
 
-    #     if request and value.user != request.user:
-    #         raise serializers.ValidationError(
-    #             "You can only create tasks in your own projects."
-    #         )
+        project = Project.objects.get(id=project_id)
 
-    #     return value
+        is_member = WorkspaceMember.objects.filter(
+            workspace=project.workspace,
+            user=value
+        ).exists()
+
+        if not is_member:
+            raise serializers.ValidationError(
+                "This user is not a member of the project workspace."
+            )
+
+        return value
