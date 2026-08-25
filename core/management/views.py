@@ -187,7 +187,7 @@ class RefreshTokenView(APIView):
             new_access_token = str(token.access_token)
             return Response({
                 "message": "Your Update Access Token", 
-                "data": new_access_token
+                "access_token": new_access_token
             })
         except TokenError:
             return Response(

@@ -47,7 +47,9 @@ INSTALLED_APPS = [
     'management',
     'workspace',
     'project',
-    'tasks'
+    # 'tasks',
+    "tasks.apps.TasksConfig",
+    "notification.apps.NotificationConfig",
 ]
 
 MIDDLEWARE = [
